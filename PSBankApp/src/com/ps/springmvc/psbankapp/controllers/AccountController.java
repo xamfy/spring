@@ -1,15 +1,34 @@
 package com.ps.springmvc.psbankapp.controllers;
 
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.ps.springmvc.psbankapp.model.Account;
+import com.ps.springmvc.psbankapp.services.AccountService;
 
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 
 @Controller
 public class AccountController {
+	
+	@Autowired
+	AccountService accountService;
+	
+	@InitBinder
+	public void initBinder(WebDataBinder dataBinder) {
+		StringTrimmerEditor ste = new StringTrimmerEditor(true);
+		dataBinder.registerCustomEditor(String.class, ste);
+		
+	}
 	
 	@RequestMapping("/")
 	public String showHomePage() {
@@ -19,7 +38,7 @@ public class AccountController {
 	@RequestMapping("/new")
 	public String newAccount(Model model) {
 		model.addAttribute("account", new Account());
-		return "newAccount";
+		return "account-form";
 	}
 	
 	@RequestMapping("/showAccount")
@@ -29,8 +48,9 @@ public class AccountController {
 	
 	@RequestMapping(value="/saveAccount",
 			method=RequestMethod.POST)
-	public String saveAccount(Model model, 
-			Account account
+	public String saveAccount(
+			@Valid @ModelAttribute("account") Account account,
+			BindingResult result
 			) {
 //		String acNo = request.getParameter("accountNo");
 //		String customerName = request.getParameter("accountHolderName");
@@ -41,10 +61,16 @@ public class AccountController {
 //		model.addAttribute("balance", balance);
 		
 		
-		model.addAttribute("account", account);
+//		model.addAttribute("account", account);
+//		
+//		return "showAccount";
 		
-		return "showAccount";
-	
+		if (result.hasErrors())
+			return "account-form";
+		else {
+			accountService.saveAccount(account);
+			return "redirect:/list";
+		}
 	}
 	
 	
